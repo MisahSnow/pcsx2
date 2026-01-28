@@ -138,6 +138,22 @@ bool dyn_shaderc::Open()
 
 	Error error;
 
+#ifdef PCSX2_SHADERC_STATIC
+#define LOAD_FUNC(F) F = &::F;
+	SHADERC_FUNCTIONS(LOAD_FUNC)
+#undef LOAD_FUNC
+
+	s_compiler = shaderc_compiler_initialize();
+	if (!s_compiler)
+	{
+		ERROR_LOG("shaderc_compiler_initialize() failed");
+		return false;
+	}
+
+	std::atexit(&dyn_shaderc::Close);
+	return true;
+#endif
+
 #ifdef _WIN32
 	const std::string libname = DynamicLibrary::GetVersionedFilename("shaderc_shared");
 #else
@@ -180,6 +196,13 @@ void dyn_shaderc::Close()
 		shaderc_compiler_release(s_compiler);
 		s_compiler = nullptr;
 	}
+
+#ifdef PCSX2_SHADERC_STATIC
+#define UNLOAD_FUNC(F) F = &::F;
+	SHADERC_FUNCTIONS(UNLOAD_FUNC)
+#undef UNLOAD_FUNC
+	return;
+#endif
 
 #define UNLOAD_FUNC(F) F = nullptr;
 	SHADERC_FUNCTIONS(UNLOAD_FUNC)

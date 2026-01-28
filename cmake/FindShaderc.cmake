@@ -4,6 +4,26 @@
 #  SHADERC_INCLUDE_DIRS - The SHADERC include directories
 #  SHADERC_LIBRARIES - The libraries needed to use SHADERC
 
+find_package(unofficial-shaderc CONFIG QUIET)
+if(TARGET unofficial::shaderc::shaderc)
+    set(SHADERC_FOUND TRUE)
+    set(SHADERC_LIBRARIES unofficial::shaderc::shaderc)
+    get_target_property(_SHADERC_INCLUDES unofficial::shaderc::shaderc INTERFACE_INCLUDE_DIRECTORIES)
+    set(SHADERC_INCLUDE_DIR ${_SHADERC_INCLUDES})
+    if(NOT TARGET Shaderc::shaderc_shared)
+        add_library(Shaderc::shaderc_shared INTERFACE IMPORTED)
+        set_target_properties(Shaderc::shaderc_shared PROPERTIES
+            INTERFACE_LINK_LIBRARIES unofficial::shaderc::shaderc
+            INTERFACE_INCLUDE_DIRECTORIES "${_SHADERC_INCLUDES}"
+        )
+    endif()
+endif()
+
+if(SHADERC_FOUND)
+    mark_as_advanced(SHADERC_INCLUDE_DIR SHADERC_LIBRARY)
+    return()
+endif()
+
 find_path(
     SHADERC_INCLUDE_DIR shaderc/shaderc.h
     ${SHADERC_PATH_INCLUDES}
